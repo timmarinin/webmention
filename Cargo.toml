@@ -1,0 +1,37 @@
+[package]
+name = "webmention"
+description = "Library and a CLI tool for sending and validation webmentions"
+homepage = "https://marinintim.com/projects/webmention/"
+repository = "https://github.com/marinintim/webmention.git"
+readme = "./README.md"
+version = "0.1.1"
+authors = ["Tim Marinin <mt@marinintim.com>"]
+edition = "2018"
+license = "MIT OR Apache-2.0"
+keywords = ["indieweb"]
+categories = ["command-line-utilities", "web-programming"]
+
+# See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
+
+[dependencies]
+
+surf = "2.2"   # fetching and sending data
+select = "0.5" # parsing HTML for data
+serde = "1.0"
+rocket = { version = "0.4.7", optional = true}
+async-std = { version = "1.9", features = ["attributes"] }
+thiserror = "1.0"
+anyhow = "1.0"
+http-types = "2.10"
+nom = "6.1.2"
+url = "2.2.1"
+clap = { version = "2.33.3", optional = true}
+
+[features]
+default = ["cli"]
+cli = ["clap"]
+receive = ["cli", "rocket"]
+
+
+[[bin]]
+name = "webmention"
