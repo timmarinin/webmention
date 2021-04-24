@@ -12,6 +12,7 @@ extern crate anyhow;
 use anyhow::{Result, Context, anyhow};
 
 use webmention::webmention::Webmention;
+use webmention::error::WebmentionError;
 use webmention::wm_url::Url;
 
 fn parse_url(u: &str) -> Result<Url> {
@@ -29,8 +30,8 @@ fn parse_url(u: &str) -> Result<Url> {
 
 async fn send_link(input: (Url, Url)) -> Result<bool> {
     let (source_url, target_url) = input;
-    let mention = Webmention::from((&source_url, &target_url));
-    webmention::sending::send_webmention(mention)
+    let mut mention = Webmention::from((&source_url, &target_url));
+    mention.send()
         .await
         .with_context(|| format!("Failed to send webmention from <{}> to <{}>", source_url, target_url))
 }
@@ -50,7 +51,15 @@ async fn send_all(source: Url) -> Result<()> {
     let sending_vec: Vec<async_std::task::JoinHandle<_>> = links
         .into_iter()
         .zip(std::iter::repeat_with(|| source.clone()))
-        .map(|l| async_std::task::spawn(async move { send_link((l.1, l.0)).await }))
+        .map(|l| {
+            let mut mention = Webmention::from((l.1, l.0));
+            mention.set_checked(true);
+            mention
+        })
+        .map(|mut w| async_std::task::spawn(async move {
+            w.send().await?;
+            Ok(w) as Result<Webmention, WebmentionError>
+        }))
         .collect();
 
     for handle in sending_vec.into_iter() {

@@ -11,8 +11,6 @@ pub mod http_client;
 pub mod link_header;
 pub mod webmention;
 pub mod wm_url;
-
-pub mod checking;
 pub mod endpoint_discovery;
 pub mod receiving;
 pub mod sending;

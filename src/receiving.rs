@@ -1,7 +1,6 @@
 use crate::storage::WebmentionStorage;
 use crate::webmention::Webmention;
 use crate::error::WebmentionError;
-use crate::checking::check_webmention;
 use url::Url;
 
 pub async fn receive_webmention(
@@ -9,8 +8,8 @@ pub async fn receive_webmention(
     source: &Url,
     target: &Url,
 ) -> Result<bool, WebmentionError> {
-    let mention = Webmention::from((source.clone(), target.clone()));
-    if check_webmention(&mention).await? {
+    let mut mention = Webmention::from((source.clone(), target.clone()));
+    if mention.check().await? {
         println!("Storing webmention {:?}", mention);
         storage
             .store(mention)
