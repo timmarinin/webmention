@@ -10,6 +10,14 @@ use webmention::webmention::Webmention;
 use webmention::error::WebmentionError;
 use url::Url;
 
+async fn fetch_links(u: &Url) -> Result<std::collections::HashSet<Url>, WebmentionError> {
+    let response = webmention::http_client::get(u).await?;
+    let links = response.html.find_links().await;
+
+    Ok(links.into_iter().collect())
+}
+
+
 fn parse_url(u: &str) -> Result<Url> {
     let attempt = Url::parse(u);
 
@@ -23,6 +31,18 @@ fn parse_url(u: &str) -> Result<Url> {
     }
 }
 
+
+pub async fn send_mentions_for_link(u: &Url) -> Result<(), WebmentionError> {
+    let response = webmention::http_client::get(u).await?;
+    let links = response.html.find_links().await;
+
+    for link in links.into_iter() {
+        Webmention::from((u.clone(), link)).send().await?;
+    }
+    Ok(())
+}
+
+
 async fn send_link(input: (Url, Url)) -> Result<bool> {
     let (source_url, target_url) = input;
     let mut mention = Webmention::from((&source_url, &target_url));
@@ -32,7 +52,7 @@ async fn send_link(input: (Url, Url)) -> Result<bool> {
 }
 
 async fn send_all(source: Url) -> Result<()> {
-    let links = webmention::fetch_links(&source).await
+    let links = fetch_links(&source).await
         .with_context(|| format!("Failed to fetch links from <{}>", source))?;
     if links.len() == 0 {
         println!("No links found");

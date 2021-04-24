@@ -15,42 +15,33 @@
 //! There is a CLI tool available with support for sending webmentions, and (optionally) a simple endpoint
 //! based on Rocket.
 
+
+
 pub mod error;
-pub(crate) mod html;
-pub(crate) mod http_client;
-pub(crate) mod link_header;
+/// Defines document
+pub mod html;
+/// Defines http_client that is used for GETting and POSTing
+pub mod http_client;
+/// Defines utility to deal with LINK header
+pub mod link_header;
+
 pub mod webmention;
+/// Defines utility to deal with URLs.
 pub(crate) mod wm_url;
+/// Specifies the endpoint discovery algorithm
 pub mod endpoint_discovery;
+/// Defines interface for webmention storage
+#[cfg(feature = "receive")]
 pub mod storage;
 
-use crate::error::WebmentionError;
-use crate::webmention::Webmention;
-use crate::wm_url::Url;
+/// Various error conditions that could happen during processing webmentions
+pub use crate::error::WebmentionError;
+/// Source URL and target URL combined with some metadata
+pub use crate::webmention::Webmention;
 
-use crate::http_client::get;
-
-pub async fn send_mentions_for_link(u: &Url) -> Result<(), WebmentionError> {
-    let response = get(u).await?;
-    let links = response.html.find_links().await;
-
-    for link in links.into_iter() {
-        Webmention::from((u.clone(), link)).send().await?;
-    }
-    Ok(())
-}
-
-pub async fn fetch_links(u: &Url) -> Result<std::collections::HashSet<Url>, WebmentionError> {
-    let response = get(u).await?;
-    let links = response.html.find_links().await;
-
-    Ok(links.into_iter().collect())
-}
-
-use crate::storage::WebmentionStorage;
-
+#[cfg(feature = "receive")]
 pub async fn receive_webmention(
-    storage: &impl WebmentionStorage,
+    storage: &impl crate::storage::WebmentionStorage,
     source: &Url,
     target: &Url,
 ) -> Result<bool, WebmentionError> {
