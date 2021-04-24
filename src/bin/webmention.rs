@@ -29,11 +29,6 @@ fn parse_url(u: &str) -> Result<Url> {
 
 async fn send_link(input: (Url, Url)) -> Result<bool> {
     let (source_url, target_url) = input;
-
-    println!(
-        "{}\tsending webmention from {} to {}...",
-        target_url, source_url, target_url
-    );
     let mention = Webmention::from((&source_url, &target_url));
     webmention::sending::send_webmention(mention)
         .await
@@ -41,7 +36,6 @@ async fn send_link(input: (Url, Url)) -> Result<bool> {
 }
 
 async fn send_all(source: Url) -> Result<()> {
-    println!("Fetching links from <{}>", source);
     let links = webmention::sending::fetch_links(&source).await
         .with_context(|| format!("Failed to fetch links from <{}>", source))?;
     if links.len() == 0 {
@@ -61,7 +55,10 @@ async fn send_all(source: Url) -> Result<()> {
 
     for handle in sending_vec.into_iter() {
         let result = handle.await;
-        println!("{:?}", result);
+        match result {
+            Ok(_) => {},
+            Err(e) => println!("Could not send webmention: {:?}", e),
+        }
     }
 
     Ok(())

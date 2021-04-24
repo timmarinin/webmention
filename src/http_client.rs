@@ -99,7 +99,6 @@ pub async fn post(endpoint: &Url, body: &impl Serialize) -> Result<bool, Webment
         http_types::StatusCode::Created => Ok(true),
         http_types::StatusCode::Accepted => Ok(true),
         status => {
-            println!("Sending status: {}", status);
             Err(WebmentionError::NotAccepted {
                 endpoint: endpoint.as_str().to_string(),
                 status_code: status,

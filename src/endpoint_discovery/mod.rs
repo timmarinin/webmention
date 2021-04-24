@@ -16,7 +16,7 @@ impl Predicate for RelWebmention {
 
 pub async fn find_target_endpoint(url: &Url) -> Result<Option<Url>, WebmentionError> {
     let mut endpoint_candidates: Vec<(usize, Url)> = Vec::new();
-    eprintln!("original URL: {}", url);
+
     let response = get(url)
         .await
         .map_err(|source| WebmentionError::DiscoveryRequestFailed {
@@ -25,7 +25,6 @@ pub async fn find_target_endpoint(url: &Url) -> Result<Option<Url>, WebmentionEr
         })?;
 
     let url = response.url.clone();
-    eprintln!("after response URL: {}", url);
 
     let endpoint_in_link_header =
         crate::link_header::find_first_rel_webmention_in_link_header(response.resp.header("Link"));
@@ -62,7 +61,6 @@ pub async fn find_target_endpoint(url: &Url) -> Result<Option<Url>, WebmentionEr
         }
     }
     endpoint_candidates.sort_by(|a, b| a.0.cmp(&b.0));
-    eprintln!("{:?}", endpoint_candidates);
     Ok(endpoint_candidates.first().map(|s| s.1.clone()))
 }
 
