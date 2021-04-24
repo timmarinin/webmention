@@ -63,13 +63,13 @@ pub async fn get(u: &Url) -> Result<Response, WebmentionError> {
             res.body_string()
                 .await
                 .map_err(|err| WebmentionError::RequestFailedRecv {
-                    url: u.clone(),
+                    url: url.clone(),
                     source: err.into_inner(),
                 })?;
 
         return Ok(Response {
-            url: u.clone(),
-            html: HTML::new(u.clone(), response),
+            url: url.clone(),
+            html: HTML::new(url.clone(), response),
             resp: res,
         });
     }
