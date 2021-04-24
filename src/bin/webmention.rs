@@ -69,6 +69,8 @@ async fn send_all(source: Url) -> Result<()> {
 
 #[cfg(feature = "receive")]
 mod receive {
+    use anyhow::Result;
+    use url::Url;
     use rocket::request::Form;
     use rocket::State;
     use webmention::storage::InMemoryWebmentionStorage;
@@ -101,7 +103,7 @@ mod receive {
         "NOT OK"
     }
 
-    async fn start_receiver(_domain: Url) -> Result<()> {
+    pub async fn start_receiver(_domain: Url) -> Result<()> {
         rocket::ignite()
             .manage(webmention::storage::InMemoryWebmentionStorage::new())
             .mount("/", routes![webmention_endpoint])
@@ -193,7 +195,7 @@ async fn main() -> Result<()> {
         {
             let domain = _receive_matches.value_of("domain").unwrap();
             let domain = parse_url(domain).with_context(|| format!("Failed to parse domain URL: <{}>", domain))?;
-            receiver::start_receiver(domain).await?;
+            receive::start_receiver(domain).await?;
             return Ok(());
         }
     } else if let Some(discover_matches) = matches.subcommand_matches("discover-endpoint") {
