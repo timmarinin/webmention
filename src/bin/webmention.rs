@@ -1,19 +1,14 @@
 #![feature(proc_macro_hygiene, decl_macro)]
 
-extern crate async_std;
 #[cfg(feature = "receive")]
 #[macro_use]
 extern crate rocket;
-extern crate webmention;
-extern crate url;
-extern crate clap;
-extern crate anyhow;
 
 use anyhow::{Result, Context, anyhow};
 
 use webmention::webmention::Webmention;
 use webmention::error::WebmentionError;
-use webmention::wm_url::Url;
+use url::Url;
 
 fn parse_url(u: &str) -> Result<Url> {
     let attempt = Url::parse(u);
@@ -37,7 +32,7 @@ async fn send_link(input: (Url, Url)) -> Result<bool> {
 }
 
 async fn send_all(source: Url) -> Result<()> {
-    let links = webmention::sending::fetch_links(&source).await
+    let links = webmention::fetch_links(&source).await
         .with_context(|| format!("Failed to fetch links from <{}>", source))?;
     if links.len() == 0 {
         println!("No links found");
@@ -95,7 +90,7 @@ mod receive {
         let urls = (Url::parse(&webmention.source), Url::parse(&webmention.target));
         if let Ok(source_url) = urls.0 {
             if let Ok(target_url) = urls.1 {
-                match async_std::task::block_on(webmention::receiving::receive_webmention(
+                match async_std::task::block_on(webmention::receive_webmention(
                     &*storage,
                     &source_url,
                     &target_url,
