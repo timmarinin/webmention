@@ -4,7 +4,7 @@ description = "Library and a CLI tool for sending and validation webmentions"
 homepage = "https://marinintim.com/projects/webmention/"
 repository = "https://github.com/marinintim/webmention.git"
 readme = "./README.md"
-version = "0.1.2"
+version = "0.1.3"
 authors = ["Tim Marinin <mt@marinintim.com>"]
 edition = "2018"
 license = "MIT OR Apache-2.0"
@@ -14,8 +14,7 @@ categories = ["command-line-utilities", "web-programming"]
 # See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
 
 [dependencies]
-
-surf = "2.2"   # fetching and sending data
+surf = { version = "2.2" }  # fetching and sending data
 select = "0.5" # parsing HTML for data
 serde = "1.0"
 rocket = { version = "0.4.7", optional = true}
@@ -31,7 +30,7 @@ clap = { version = "2.33.3", optional = true}
 default = ["cli"]
 cli = ["clap"]
 receive = ["cli", "rocket"]
-
+hyper = ["surf/hyper-client"]
 
 [[bin]]
 name = "webmention"
