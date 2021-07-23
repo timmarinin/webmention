@@ -131,10 +131,10 @@ mod receive {
     }
 }
 
-use clap::{App, Arg, SubCommand};
 
 #[async_std::main]
 async fn main() -> Result<()> {
+    use clap::{App, Arg, SubCommand};
     let app = App::new("webmention")
         .version("0.1.0")
         .author("Tim Marinin <mt@marinintim.com>")
