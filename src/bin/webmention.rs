@@ -1,5 +1,3 @@
-#![feature(proc_macro_hygiene, decl_macro)]
-
 #[cfg(feature = "receive")]
 #[macro_use]
 extern crate rocket;
