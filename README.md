@@ -7,16 +7,16 @@ This crate helps deal with [Webmentions](https://www.w3.org/TR/webmention/): sen
 If you have `cargo` installed, then you can easily get webmention by running
 
 ```
-cargo install webmention --bin webmention
+cargo install webmention --bin webmention --features="cli"
 ```
 
 Or (if you want receiving functionality):
 
 ```
-cargo install webmention --bin webmention --features='receive'
+cargo install webmention --bin webmention --features="cli receive"
 ```
 
-## Usage
+## CLI Usage
 
 Send a webmention:
 
