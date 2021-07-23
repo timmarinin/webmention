@@ -14,7 +14,7 @@ categories = ["command-line-utilities", "web-programming"]
 # See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
 
 [dependencies]
-surf = { version = "2.2" }  # fetching and sending data
+surf = { version = "2.2", default-features = false, features = ["middleware-logger", "hyper-client"] }  # fetching and sending data
 select = "0.5" # parsing HTML for data
 serde = "1.0"
 rocket = { version = "0.4.7", optional = true}
@@ -27,10 +27,11 @@ url = "2.2.1"
 clap = { version = "2.33.3", optional = true}
 
 [features]
-default = ["cli"]
+default = []
 cli = ["clap"]
 receive = ["cli", "rocket"]
 hyper = ["surf/hyper-client"]
 
 [[bin]]
 name = "webmention"
+required-features = ["cli"]
