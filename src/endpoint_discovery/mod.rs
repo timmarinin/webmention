@@ -26,8 +26,11 @@ pub async fn find_target_endpoint(url: &Url) -> Result<Option<Url>, WebmentionEr
 
     let url = response.url.clone();
 
-    let endpoint_in_link_header =
-        crate::link_header::find_first_rel_webmention_in_link_header(response.resp.header("Link"));
+    let endpoint_in_link_header = response
+        .rels
+        .get("webmention")
+        .map(|urls| urls.get(0))
+        .flatten();
 
     if let Some(link_str) = endpoint_in_link_header {
         if let Ok(u) = absolute_url(&link_str, &url) {

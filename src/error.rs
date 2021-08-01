@@ -34,7 +34,7 @@ pub enum WebmentionError {
     #[error("webmention was not accepted by endpoint <{endpoint}>")]
     NotAccepted {
         endpoint: String,
-        status_code: http_types::StatusCode,
+        status_code: reqwest::StatusCode,
     },
 
     #[error("generic request failed for URL <{url}>")]

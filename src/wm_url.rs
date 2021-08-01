@@ -22,11 +22,13 @@ mod test {
     #[test]
     fn test_absolute_url() {
         let index_html_url = Url::parse("https://marinintim.com/projects/index.html").unwrap();
-        let pretty_url = Url::parse("https://marinintim.com/projects").unwrap();
+        let pretty_url = Url::parse("https://marinintim.com/projects/").unwrap();
         let relative_path = "api/webmention";
 
         assert_eq!(
-            absolute_url(relative_path, &index_html_url).unwrap().as_str(),
+            absolute_url(relative_path, &index_html_url)
+                .unwrap()
+                .as_str(),
             "https://marinintim.com/projects/api/webmention"
         );
         assert_eq!(
@@ -47,7 +49,8 @@ mod test {
 
     #[test]
     fn test_absolute_url3() {
-        let base_url = Url::parse("https://webmention.rocks/test/23/page/wiKQ8pZzlN0q3hsIZADg").unwrap();
+        let base_url =
+            Url::parse("https://webmention.rocks/test/23/page/wiKQ8pZzlN0q3hsIZADg").unwrap();
         let relative_path = "webmention-endpoint/xXNLydslCJo3niJSfoXk";
         assert_eq!(
             absolute_url(relative_path, &base_url).unwrap().as_str(),

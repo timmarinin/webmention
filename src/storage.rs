@@ -1,8 +1,8 @@
-use crate::webmention::Webmention;
 use crate::error::WebmentionError;
+use crate::webmention::Webmention;
 
-use std::sync::{Arc, Mutex};
 use crate::wm_url::Url;
+use std::sync::{Arc, Mutex};
 
 pub trait WebmentionStorage {
     fn store(&self, webmention: Webmention) -> Result<(), WebmentionError>;

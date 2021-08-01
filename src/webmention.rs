@@ -1,11 +1,7 @@
 use crate::{
-    wm_url::Url,
-    http_client::get,
-    endpoint_discovery::find_target_endpoint,
-    error::WebmentionError
+    endpoint_discovery::find_target_endpoint, error::WebmentionError, http_client::get, wm_url::Url,
 };
 use serde::{Deserialize, Serialize};
-
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct Webmention {
@@ -58,7 +54,7 @@ impl From<(&Url, &Url)> for Webmention {
             source: tuple.0.clone(),
             target: tuple.1.clone(),
             sent: false,
-            checked: None
+            checked: None,
         }
     }
 }
@@ -78,7 +74,7 @@ impl From<(Url, Url)> for Webmention {
 mod test {
     use super::Webmention;
     use crate::wm_url::Url;
-    use async_std::task::block_on;
+    use tokio_test::block_on;
     #[test]
     fn webmention_check_test() {
         let source = Url::parse("https://marinintim.com/notes/2021/hwc-rsvp/").unwrap();

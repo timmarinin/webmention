@@ -2,11 +2,11 @@
 #[macro_use]
 extern crate rocket;
 
-use anyhow::{Result, Context, anyhow};
+use anyhow::{anyhow, Context, Result};
 
-use webmention::webmention::Webmention;
-use webmention::error::WebmentionError;
 use url::Url;
+use webmention::error::WebmentionError;
+use webmention::webmention::Webmention;
 
 async fn fetch_links(u: &Url) -> Result<std::collections::HashSet<Url>, WebmentionError> {
     let response = webmention::http_client::get(u).await?;
@@ -15,7 +15,6 @@ async fn fetch_links(u: &Url) -> Result<std::collections::HashSet<Url>, Webmenti
     Ok(links.into_iter().collect())
 }
 
-
 fn parse_url(u: &str) -> Result<Url> {
     let attempt = Url::parse(u);
 
@@ -23,12 +22,16 @@ fn parse_url(u: &str) -> Result<Url> {
         Ok(url) => Ok(url),
         Err(url::ParseError::RelativeUrlWithoutBase) => {
             let with_http = "http://".to_owned() + u;
-            return Url::parse(&with_http).with_context(|| format!("Failed to parse URL after prepending http:// prefix to <{}>", u));
-        },
-        Err(e) => Err(e.into())
+            return Url::parse(&with_http).with_context(|| {
+                format!(
+                    "Failed to parse URL after prepending http:// prefix to <{}>",
+                    u
+                )
+            });
+        }
+        Err(e) => Err(e.into()),
     }
 }
-
 
 pub async fn send_mentions_for_link(u: &Url) -> Result<(), WebmentionError> {
     let response = webmention::http_client::get(u).await?;
@@ -40,17 +43,20 @@ pub async fn send_mentions_for_link(u: &Url) -> Result<(), WebmentionError> {
     Ok(())
 }
 
-
 async fn send_link(input: (Url, Url)) -> Result<bool> {
     let (source_url, target_url) = input;
     let mut mention = Webmention::from((&source_url, &target_url));
-    mention.send()
-        .await
-        .with_context(|| format!("Failed to send webmention from <{}> to <{}>", source_url, target_url))
+    mention.send().await.with_context(|| {
+        format!(
+            "Failed to send webmention from <{}> to <{}>",
+            source_url, target_url
+        )
+    })
 }
 
 async fn send_all(source: Url) -> Result<()> {
-    let links = fetch_links(&source).await
+    let links = fetch_links(&source)
+        .await
         .with_context(|| format!("Failed to fetch links from <{}>", source))?;
     if links.len() == 0 {
         println!("No links found");
@@ -61,7 +67,7 @@ async fn send_all(source: Url) -> Result<()> {
         }
     }
 
-    let sending_vec: Vec<async_std::task::JoinHandle<_>> = links
+    let sending_vec: Vec<tokio::task::JoinHandle<_>> = links
         .into_iter()
         .zip(std::iter::repeat_with(|| source.clone()))
         .map(|l| {
@@ -69,16 +75,21 @@ async fn send_all(source: Url) -> Result<()> {
             mention.set_checked(true);
             mention
         })
-        .map(|mut w| async_std::task::spawn(async move {
-            w.send().await?;
-            Ok(w) as Result<Webmention, WebmentionError>
-        }))
+        .map(|mut w| {
+            tokio::task::spawn(async move {
+                w.send().await?;
+                Ok(w) as Result<Webmention, WebmentionError>
+            })
+        })
         .collect();
 
     for handle in sending_vec.into_iter() {
         let result = handle.await;
         match result {
-            Ok(_) => {},
+            Ok(r) => match r {
+                Ok(r) => println!("OK {}", r.target),
+                Err(e) => println!("Could not send webmention: {:?}", e),
+            },
             Err(e) => println!("Could not send webmention: {:?}", e),
         }
     }
@@ -89,9 +100,9 @@ async fn send_all(source: Url) -> Result<()> {
 #[cfg(feature = "receive")]
 mod receive {
     use anyhow::Result;
-    use url::Url;
     use rocket::request::Form;
     use rocket::State;
+    use url::Url;
     use webmention::storage::InMemoryWebmentionStorage;
 
     #[derive(FromForm)]
@@ -105,7 +116,10 @@ mod receive {
         storage: State<InMemoryWebmentionStorage>,
         webmention: Form<WebmentionAttempt>,
     ) -> &'static str {
-        let urls = (Url::parse(&webmention.source), Url::parse(&webmention.target));
+        let urls = (
+            Url::parse(&webmention.source),
+            Url::parse(&webmention.target),
+        );
         if let Ok(source_url) = urls.0 {
             if let Ok(target_url) = urls.1 {
                 match async_std::task::block_on(webmention::receive_webmention(
@@ -131,8 +145,7 @@ mod receive {
     }
 }
 
-
-#[async_std::main]
+#[tokio::main(flavor = "current_thread")]
 async fn main() -> Result<()> {
     use clap::{App, Arg, SubCommand};
     let app = App::new("webmention")
@@ -150,15 +163,15 @@ async fn main() -> Result<()> {
                     .value_name("URL")
                     .help("The URL that we're linking from")
                     .takes_value(true)
-                    .required(true)
+                    .required(true),
             )
             .arg(
                 Arg::with_name("target")
                     .short("t")
                     .long("to")
                     .value_name("URL")
-                    .help("The URL that we had linked to")
-            )
+                    .help("The URL that we had linked to"),
+            ),
     );
 
     #[cfg(feature = "receive")]
@@ -172,8 +185,8 @@ async fn main() -> Result<()> {
                     .value_name("URL")
                     .help("Domain for which we intend to receive webmentions")
                     .takes_value(true)
-                    .required(true)
-            )
+                    .required(true),
+            ),
     );
 
     let app = app.subcommand(
@@ -184,10 +197,9 @@ async fn main() -> Result<()> {
                     .value_name("URL")
                     .help("URL that we want to discover endpoint for")
                     .index(1)
-                    .required(true)
-            )
+                    .required(true),
+            ),
     );
-
 
     let mut help = Vec::new();
     app.write_help(&mut help).expect("Could not write help");
@@ -199,11 +211,11 @@ async fn main() -> Result<()> {
         let source = send_matches.value_of("source").unwrap();
         let source = parse_url(source)
             .with_context(|| format!("Failed to parse source URL: <{}>", source))?;
-        
+
         if let Some(target) = send_matches.value_of("target") {
             let target = parse_url(target)
                 .with_context(|| format!("Failed to parse target URL: <{}>", target))?;
-            
+
             send_link((source, target)).await?;
         } else {
             send_all(source).await?;
@@ -213,13 +225,15 @@ async fn main() -> Result<()> {
         #[cfg(feature = "receive")]
         {
             let domain = _receive_matches.value_of("domain").unwrap();
-            let domain = parse_url(domain).with_context(|| format!("Failed to parse domain URL: <{}>", domain))?;
+            let domain = parse_url(domain)
+                .with_context(|| format!("Failed to parse domain URL: <{}>", domain))?;
             receive::start_receiver(domain).await?;
             return Ok(());
         }
     } else if let Some(discover_matches) = matches.subcommand_matches("discover-endpoint") {
         let target = discover_matches.value_of("target").unwrap();
-        let target = parse_url(target).with_context(|| format!("Failed to parse target URL: <{}>", target))?;
+        let target = parse_url(target)
+            .with_context(|| format!("Failed to parse target URL: <{}>", target))?;
         let endpoint = webmention::endpoint_discovery::find_target_endpoint(&target).await?;
         if let Some(endpoint) = endpoint {
             println!("{}", endpoint);
@@ -231,4 +245,3 @@ async fn main() -> Result<()> {
     println!("{}", help);
     Err(anyhow!("No command specified"))
 }
-

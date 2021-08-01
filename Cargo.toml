@@ -4,7 +4,7 @@ description = "Library and a CLI tool for sending and validation webmentions"
 homepage = "https://marinintim.com/projects/webmention/"
 repository = "https://github.com/marinintim/webmention.git"
 readme = "./README.md"
-version = "0.2.0"
+version = "0.3.0"
 authors = ["Tim Marinin <mt@marinintim.com>"]
 edition = "2018"
 license = "MIT OR Apache-2.0"
@@ -14,23 +14,26 @@ categories = ["command-line-utilities", "web-programming"]
 # See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
 
 [dependencies]
-surf = { version = "2.2", default-features = false, features = ["middleware-logger", "hyper-client"] }  # fetching and sending data
+reqwest = { version = "0.11" } # HTTP GET + POST
 select = "0.5" # parsing HTML for data
-serde = "1.0"
-rocket = { version = "0.4.7", optional = true}
-async-std = { version = "1.9", features = ["attributes"] }
-thiserror = "1.0"
-anyhow = "1.0"
-http-types = "2.10"
-nom = "6.1.2"
-url = "2.2.1"
-clap = { version = "2.33.3", optional = true}
+url = { version = "2.2", features = [ "serde" ] } # working with URLs
+serde = { version = "1", features = ["derive"] } # serializing + deserializing webmentions
+thiserror = "1" # public errors
+anyhow = "1" # wrapping errors
+
+nom = "6" # parsing Link header
+
+rocket = { version = "0.4.7", optional = true} # for web server
+clap = { version = "2.33.3", optional = true} # for CLI
+tokio = { version = "1", optional = true, default-features = false }
+
+[dev-dependencies]
+tokio-test = "0.4.2"
 
 [features]
 default = []
-cli = ["clap"]
+cli = ["clap", "tokio", "tokio/rt", "tokio/macros"]
 receive = ["cli", "rocket"]
-hyper = ["surf/hyper-client"]
 
 [[bin]]
 name = "webmention"

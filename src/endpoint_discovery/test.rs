@@ -1,6 +1,6 @@
 use super::find_target_endpoint;
 use crate::wm_url::Url;
-use async_std::task::block_on;
+use tokio_test::block_on;
 
 #[test]
 fn find_target_endpoint_test() {

@@ -1,5 +1,12 @@
 # webmention changelog
 
+# 0.3.0
+
+- switched from `surf` to `reqwest`
+- switched from `async_std` to `tokio` and tried to make it minimal
+- added success reporting in cli
+- used `tokio_test` for testing
+
 # 0.2.0
 
 - default-features no longer include `cli` to help with library usage

@@ -1,5 +1,4 @@
 use crate::error::WebmentionError;
-use http_types::headers::HeaderValues;
 use nom::{
     branch::alt,
     bytes::complete::is_not,
@@ -9,27 +8,30 @@ use nom::{
     sequence::{delimited, preceded, tuple},
     IResult,
 };
-use std::convert::TryFrom;
+use reqwest::header::{GetAll, HeaderValue};
 
-pub fn find_first_rel_webmention_in_link_header(header: Option<&HeaderValues>) -> Option<String> {
-    if header.is_none() {
-        return None;
-    }
+pub fn all_rels(header: GetAll<HeaderValue>) -> std::collections::HashMap<String, Vec<String>> {
+    let mut merged_rels = std::collections::HashMap::new();
+    for header_value in header.into_iter() {
+        let link_header = match header_value.to_str() {
+            Ok(s) => match link_header(s) {
+                Ok((_remaining, link)) => link,
+                _ => continue,
+            },
+            Err(_e) => continue,
+        };
 
-    for header_value in header.unwrap().into_iter() {
-        let link_header: Result<LinkHeader, _> = TryFrom::try_from(header_value.as_str());
-        if link_header.is_err() {
-            continue;
-        }
-
-        for link in link_header.unwrap().values {
-            if link.rels.iter().any(|rel| rel == "webmention") {
-                return Some(link.uri_reference);
+        for link in link_header.values {
+            for rel in link.rels.iter() {
+                merged_rels
+                    .entry(rel.clone())
+                    .or_insert(Vec::new())
+                    .push(link.uri_reference.clone());
             }
         }
     }
 
-    None
+    merged_rels
 }
 
 /// Stores data of a single link inside of the link header (dropping all params save for rel)
@@ -99,7 +101,7 @@ fn link(input: &str) -> IResult<&str, LinkHeaderValue> {
     )(input)
 }
 
-fn parsed_to_link_header(parsed: Vec<LinkHeaderValue>) -> Result<LinkHeader, ()> {
+fn parsed_to_link_header(parsed: Vec<LinkHeaderValue>) -> Result<LinkHeader, WebmentionError> {
     Ok(LinkHeader { values: parsed })
 }
 
@@ -108,15 +110,6 @@ fn link_header(input: &str) -> IResult<&str, LinkHeader> {
         separated_list0(tuple((char(','), char(' '))), link),
         parsed_to_link_header,
     )(input)
-}
-
-impl TryFrom<&str> for LinkHeader {
-    type Error = WebmentionError;
-    fn try_from(s: &str) -> Result<LinkHeader, WebmentionError> {
-        let (_remaining, link) =
-            link_header(s).map_err(|_err| WebmentionError::InvalidLinkHeader(s.to_string()))?;
-        Ok(link)
-    }
 }
 
 #[cfg(test)]

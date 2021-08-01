@@ -70,7 +70,7 @@ impl HTML {
 mod test {
     use crate::http_client::get;
     use crate::wm_url::Url;
-    use async_std::task::block_on;
+    use tokio_test::block_on;
     #[test]
     fn find_links_test() {
         let url = Url::parse("https://marinintim.com/notes/2021/hwc-rsvp/").unwrap();

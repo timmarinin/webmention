@@ -15,8 +15,6 @@
 //! There is a CLI tool available with support for sending webmentions, and (optionally) a simple endpoint
 //! based on Rocket.
 
-
-
 pub mod error;
 /// Defines document
 pub mod html;
@@ -25,14 +23,14 @@ pub mod http_client;
 /// Defines utility to deal with LINK header
 pub mod link_header;
 
-pub mod webmention;
-/// Defines utility to deal with URLs.
-pub(crate) mod wm_url;
 /// Specifies the endpoint discovery algorithm
 pub mod endpoint_discovery;
 /// Defines interface for webmention storage
 #[cfg(feature = "receive")]
 pub mod storage;
+pub mod webmention;
+/// Defines utility to deal with URLs.
+pub(crate) mod wm_url;
 
 /// Various error conditions that could happen during processing webmentions
 pub use crate::error::WebmentionError;
@@ -58,4 +56,3 @@ pub async fn receive_webmention(
         Ok(false)
     }
 }
-
