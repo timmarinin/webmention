@@ -11,8 +11,14 @@ pub struct Webmention {
     sent: bool,
 }
 
+pub enum WebmentionAcceptance {
+    NotValid,
+    NotAccepted,
+    Accepted,
+}
+
 impl Webmention {
-    pub async fn send(&mut self) -> Result<bool, WebmentionError> {
+    pub async fn send(&mut self) -> Result<WebmentionAcceptance, WebmentionError> {
         let valid = if let Some(cached_valid) = self.checked {
             cached_valid
         } else {
@@ -22,7 +28,7 @@ impl Webmention {
         };
 
         if !valid {
-            return Ok(false);
+            return Ok(WebmentionAcceptance::NotValid);
         }
 
         let endpoint = find_target_endpoint(&self.target)
@@ -35,7 +41,10 @@ impl Webmention {
 
         let accepted = crate::http_client::post(&endpoint, &self).await?;
         self.sent = true;
-        Ok(accepted)
+        match accepted {
+            true => Ok(WebmentionAcceptance::Accepted),
+            false => Ok(WebmentionAcceptance::NotAccepted)
+        }
     }
 
     pub async fn check(&mut self) -> Result<bool, WebmentionError> {
