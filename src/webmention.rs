@@ -3,6 +3,8 @@ use crate::{
 };
 use serde::{Deserialize, Serialize};
 
+/// Contains source URL and target URL, as well as whether we checked the source and whether we
+/// sent webmention.
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct Webmention {
     pub source: Url,
@@ -11,13 +13,36 @@ pub struct Webmention {
     sent: bool,
 }
 
+/// The logical result of an attempt to send webmention, if there are no [errors](WebmentionError) (such as networking
+/// errors, URL parsing errors, etc.)
+#[derive(Debug, PartialEq)]
 pub enum WebmentionAcceptance {
+    /// Common option as of 2021
+    NoTargetEndpoint,
+    /// Source doesn't contain link to target
     NotValid,
+    /// Target endpoint didn't accept the webmention
     NotAccepted,
+    /// Target endpoint accepted the webmention
     Accepted,
 }
 
 impl Webmention {
+    /// Create new Webmention from two `AsRef<str>`, which would be parsed by `Url::parse`.
+    pub fn new<T: AsRef<str>>(source: T, target: T) -> Result<Webmention, url::ParseError> {
+        let source_url = Url::parse(source.as_ref())?;
+        let target_url = Url::parse(target.as_ref())?;
+        Ok(Webmention::from((source_url, target_url)))
+    }
+
+    /// Send Webmention to target endpoint.
+    ///
+    /// This includes a) checking the source to include link to target, b) discovering target
+    /// endpoint, c) sending POST request to target endpoint.
+    ///
+    /// You can skip a) via `webmention.set_checked(true)`.
+    ///
+    /// The result it `WebmentionAcceptance`, which signifies several distinct outcomes.
     pub async fn send(&mut self) -> Result<WebmentionAcceptance, WebmentionError> {
         let valid = if let Some(cached_valid) = self.checked {
             cached_valid
@@ -31,13 +56,18 @@ impl Webmention {
             return Ok(WebmentionAcceptance::NotValid);
         }
 
-        let endpoint = find_target_endpoint(&self.target)
+        let endpoint_result = find_target_endpoint(&self.target)
             .await
             .map_err(|e| WebmentionError::DiscoveryRequestFailed {
                 source: Box::new(e),
                 url: self.target.clone(),
-            })?
-            .ok_or_else(|| WebmentionError::NoEndpointDiscovered(self.target.clone()))?;
+            })?;
+
+        if endpoint_result.is_none() {
+            return Ok(WebmentionAcceptance::NoTargetEndpoint);
+        }
+
+        let endpoint = endpoint_result.unwrap();
 
         let accepted = crate::http_client::post(&endpoint, &self).await?;
         self.sent = true;
@@ -81,7 +111,7 @@ impl From<(Url, Url)> for Webmention {
 
 #[cfg(test)]
 mod test {
-    use super::Webmention;
+    use super::{Webmention, WebmentionAcceptance};
     use crate::wm_url::Url;
     use tokio_test::block_on;
     #[test]
@@ -93,5 +123,16 @@ mod test {
         assert!(result.is_ok());
         let result = result.unwrap();
         assert_eq!(result, true);
+    }
+    #[test]
+    fn webmention_new_test() {
+        let wm = Webmention::new("https://marinintim.com/notes/2021/hwc-rsvp/", "https://evgenykuznetsov.org/events/2021/hwc-online/");
+        assert!(wm.is_ok());
+        let mut wm = wm.unwrap();
+        wm.set_checked(true); // to skip check
+        let result = block_on(wm.send());
+        assert!(result.is_ok());
+        let result = result.unwrap();
+        assert_eq!(result, WebmentionAcceptance::Accepted);
     }
 }
