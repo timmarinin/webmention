@@ -1,5 +1,11 @@
 # webmention changelog
 
+# 0.4.0
+
+- added some docs
+- no more errors when no target endpoint is found
+- new enum variant `WebmentionAcceptance::NoTargetEndpoint` returned from `send`
+
 # 0.3.0
 
 - switched from `surf` to `reqwest`
