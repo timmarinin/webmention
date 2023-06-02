@@ -21,7 +21,7 @@ serde = { version = "1", features = ["derive"] } # serializing + deserializing w
 thiserror = "1" # public errors
 anyhow = "1" # wrapping errors
 
-nom = "6" # parsing Link header
+nom = "7" # parsing Link header
 
 rocket = { version = "0.4.7", optional = true} # for web server
 clap = { version = "2.33.3", optional = true} # for CLI
