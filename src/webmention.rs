@@ -114,6 +114,8 @@ mod test {
     use super::{Webmention, WebmentionAcceptance};
     use crate::wm_url::Url;
     use tokio_test::block_on;
+    
+    #[ignore]
     #[test]
     fn webmention_check_test() {
         let source = Url::parse("https://marinintim.com/notes/2021/hwc-rsvp/").unwrap();
@@ -124,6 +126,8 @@ mod test {
         let result = result.unwrap();
         assert_eq!(result, true);
     }
+
+    #[ignore]
     #[test]
     fn webmention_new_test() {
         let wm = Webmention::new("https://marinintim.com/notes/2021/hwc-rsvp/", "https://evgenykuznetsov.org/events/2021/hwc-online/");

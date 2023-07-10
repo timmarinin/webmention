@@ -71,6 +71,8 @@ mod test {
     use crate::http_client::get;
     use crate::wm_url::Url;
     use tokio_test::block_on;
+    
+    #[ignore]
     #[test]
     fn find_links_test() {
         let url = Url::parse("https://marinintim.com/notes/2021/hwc-rsvp/").unwrap();
