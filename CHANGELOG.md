@@ -1,5 +1,9 @@
 # webmention changelog
 
+# 0.5.0
+
+- bumped nom and select dependencies
+
 # 0.4.0
 
 - added some docs
