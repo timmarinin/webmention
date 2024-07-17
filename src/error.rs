@@ -61,4 +61,10 @@ pub enum WebmentionError {
         #[from]
         source: url::ParseError,
     },
+
+    #[error("could not parse document")]
+    UnparseableDocument,
+
+    #[error("no document links found")]
+    NoDocumentLinks,
 }

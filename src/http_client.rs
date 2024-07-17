@@ -32,11 +32,11 @@ pub async fn get(u: &Url) -> Result<Response, WebmentionError> {
                 source: err.into(),
             })?;
 
-    return Ok(Response {
+    Ok(Response {
         url: u.clone(),
         html: HTML::new(u.clone(), response),
         rels,
-    });
+    })
 }
 
 pub async fn post(endpoint: &Url, body: &impl Serialize) -> Result<bool, WebmentionError> {

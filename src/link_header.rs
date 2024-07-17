@@ -84,8 +84,7 @@ fn parsed_to_link_header_value(parsed: (&str, Vec<(&str, &str)>)) -> Result<Link
         .1
         .iter()
         .filter(|opt| opt.0 == "rel")
-        .map(|opt| opt.1.split_whitespace())
-        .flatten()
+        .flat_map(|opt| opt.1.split_whitespace())
         .map(|s| s.to_string())
         .collect();
     Ok(LinkHeaderValue {

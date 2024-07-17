@@ -47,7 +47,7 @@ impl Webmention {
         let valid = if let Some(cached_valid) = self.checked {
             cached_valid
         } else {
-            let valid = self.check().await?;
+            let valid = self.check().await.is_ok();
             self.checked = Some(valid);
             valid
         };
@@ -56,30 +56,30 @@ impl Webmention {
             return Ok(WebmentionAcceptance::NotValid);
         }
 
-        let endpoint_result = find_target_endpoint(&self.target)
-            .await
-            .map_err(|e| WebmentionError::DiscoveryRequestFailed {
+        let endpoint_result = find_target_endpoint(&self.target).await.map_err(|e| {
+            WebmentionError::DiscoveryRequestFailed {
                 source: Box::new(e),
                 url: self.target.clone(),
-            })?;
+            }
+        })?;
 
         if endpoint_result.is_none() {
             return Ok(WebmentionAcceptance::NoTargetEndpoint);
         }
 
-        let endpoint = endpoint_result.unwrap();
+        let endpoint = endpoint_result.ok_or(WebmentionError::UnparseableDocument)?;
 
         let accepted = crate::http_client::post(&endpoint, &self).await?;
         self.sent = true;
         match accepted {
             true => Ok(WebmentionAcceptance::Accepted),
-            false => Ok(WebmentionAcceptance::NotAccepted)
+            false => Ok(WebmentionAcceptance::NotAccepted),
         }
     }
 
-    pub async fn check(&mut self) -> Result<bool, WebmentionError> {
+    pub async fn check(&mut self) -> Result<(), WebmentionError> {
         let response = get(&self.source).await?;
-        Ok(response.html.contains(&self.target))
+        response.html.contains(&self.target)
     }
 
     pub fn set_checked(&mut self, checked: bool) {
@@ -114,7 +114,7 @@ mod test {
     use super::{Webmention, WebmentionAcceptance};
     use crate::wm_url::Url;
     use tokio_test::block_on;
-    
+
     #[ignore]
     #[test]
     fn webmention_check_test() {
@@ -123,14 +123,15 @@ mod test {
         let mut mention = Webmention::from((source, target));
         let result = block_on(mention.check());
         assert!(result.is_ok());
-        let result = result.unwrap();
-        assert_eq!(result, true);
     }
 
     #[ignore]
     #[test]
     fn webmention_new_test() {
-        let wm = Webmention::new("https://marinintim.com/notes/2021/hwc-rsvp/", "https://evgenykuznetsov.org/events/2021/hwc-online/");
+        let wm = Webmention::new(
+            "https://marinintim.com/notes/2021/hwc-rsvp/",
+            "https://evgenykuznetsov.org/events/2021/hwc-online/",
+        );
         assert!(wm.is_ok());
         let mut wm = wm.unwrap();
         wm.set_checked(true); // to skip check
