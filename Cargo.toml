@@ -14,19 +14,30 @@ categories = ["command-line-utilities", "web-programming"]
 # See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
 
 [dependencies]
-reqwest = { version = "0.11" } # HTTP GET + POST
-select = "0.6" # parsing HTML for data
+# HTTP GET + POST
+reqwest = { version = "0.11" }
+
+# parsing HTML for data
+select = "0.6"
 url = { version = "2.2", features = ["serde"] } # working with URLs
-serde = { version = "1", features = [
-  "derive",
-] } # serializing + deserializing webmentions
-thiserror = "1" # public errors
-anyhow = "1" # wrapping errors
+
+# serializing + deserializing webmentions
+serde = { version = "1", features = ["derive"] }
+
+# public errors
+thiserror = "1"
+
+# wrapping errors
+anyhow = "1"
 
 nom = "7" # parsing Link header
 
-rocket = { version = "0.4.7", optional = true }                      # for web server
-clap = { version = "2.33.3", optional = true }                       # for CLI
+# for web server
+rocket = { version = "0.4.7", optional = true }
+
+# for CLI
+clap = { version = "2.33.3", optional = true }
+
 tokio = { version = "1", optional = true, default-features = false }
 
 [dev-dependencies]
