@@ -15,7 +15,7 @@ categories = ["command-line-utilities", "web-programming"]
 
 [dependencies]
 # HTTP GET + POST
-reqwest = { version = "0.11" }
+reqwest = { version = "0.11", default-features = false, features = ["rustls-tls"] }
 
 # parsing HTML for data
 select = "0.6"
@@ -32,7 +32,8 @@ thiserror = "1"
 # wrapping errors
 anyhow = "1"
 
-nom = "7" # parsing Link header
+# parsing Link header
+nom = "7" 
 
 # for web server
 rocket = { version = "0.4.7", optional = true }
