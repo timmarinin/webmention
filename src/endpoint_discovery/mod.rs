@@ -7,7 +7,7 @@ use select::predicate::{Name, Predicate};
 
 struct RelWebmention;
 impl Predicate for RelWebmention {
-    fn matches(self: &Self, node: &Node) -> bool {
+    fn matches(&self, node: &Node) -> bool {
         node.attr("rel").map_or(false, |rels| {
             rels.split_whitespace().any(|rel| rel == "webmention")
         })
@@ -29,16 +29,15 @@ pub async fn find_target_endpoint(url: &Url) -> Result<Option<Url>, WebmentionEr
     let endpoint_in_link_header = response
         .rels
         .get("webmention")
-        .map(|urls| urls.get(0))
-        .flatten();
+        .and_then(|urls| urls.first());
 
     if let Some(link_str) = endpoint_in_link_header {
-        if let Ok(u) = absolute_url(&link_str, &url) {
+        if let Ok(u) = absolute_url(link_str, &url) {
             endpoint_candidates.push((0, u));
         }
     }
 
-    let doc = response.html.doc();
+    let doc = response.html.doc()?;
 
     {
         let mut link_rels = doc.find(Name("link").and(RelWebmention));
